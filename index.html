@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="description" content="Page to read information about the planets of Star Wars">
+  <title>Star Wars Planets</title>
+  <link rel="icon" type="image/png" href="/assets/img/favicon.png" />
+  <link rel="stylesheet" href="/styles/styles.css">
+</head>
+
+<body>
+  <div id="app">
+    <header>
+      <img src="assets/img/swlogo.webp" alt="" class="swlogo">
+      <h1>Planets of Star Wars</h1>
+    </header>
+    <section class="main">
+      <div v-if="!loading" class="select-container">
+        <label for="sort">Sort by:</label>
+        <select id="sort" v-model="sortBy" class="planets-select">
+          <option value="name">Name</option>
+          <option value="population">Population</option>
+          <option value="diameter">Diameter</option>
+          <option value="climate">Climate</option>
+          <option value="gravity">Gravity</option>
+          <option value="terrain">Terrain</option>,
+        </select>
+      </div>
+      <div v-if="loading" class="loading">
+        <img src="assets/img/deathstar.gif" alt="" class="dstar">
+        <p>Loading...</p>
+      </div>
+      <div v-else class="grid">
+        <div v-for="planet in sortedPlanets" :key="planet.name" class="planet">
+          <h3>{{ planet.name }}</h3>
+          <p>Population: {{ planet.population }}</p>
+          <p>Diameter: {{ planet.diameter }}</p>
+          <p>Climate: {{ planet.climate }}</p>
+          <p>Gravity: {{ planet.gravity }}</p>
+          <p>Terrain: {{ planet.terrain }}</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/vue@2.6.14/dist/vue.js"></script>
+  <script>
+    new Vue({
+      el: '#app',
+      data: {
+        loading: true,
+        sortBy: 'population',
+        planets: []
+      },
+      mounted() {
+        this.fetchPlanets();
+      },
+      computed: {
+        sortedPlanets() {
+          return this.planets.slice().sort((a, b) => {
+            const valueA = this.getValue(a[this.sortBy]);
+            const valueB = this.getValue(b[this.sortBy]);
+
+            if (typeof valueA === 'string' && typeof valueB === 'string') {
+              return valueA.localeCompare(valueB);
+            } else if (typeof valueA === 'number' && typeof valueB === 'number') {
+              return valueA - valueB;
+            } else if (typeof valueA === 'number') {
+              return -1;
+            } else if (typeof valueB === 'number') {
+              return 1;
+            } else {
+              return 0;
+            }
+          });
+        },
+      },
+      methods: {
+        fetchPlanets() {
+          fetch('https://swapi.dev/api/planets/')
+            .then(response => response.json())
+            .then(data => {
+              this.planets = data.results;
+              this.loading = false;
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              this.loading = false;
+            });
+        },
+        getValue(value) {
+          if (typeof value === 'string' && !isNaN(value)) {
+            return parseFloat(value);
+          }
+          return value;
+        }
+      }
+    });
+  </script>
+</body>
+
+</html>
